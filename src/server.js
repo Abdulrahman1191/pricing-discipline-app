@@ -25,15 +25,47 @@ const DEALS = new Map();
 let counter = 0;
 
 /* ---------------- auth (platform proxy) ---------------- */
+const PUBLIC_PATHS = new Set(['/healthz', '/debug']);
 app.use('*', async (c, next) => {
-  if (c.req.path === '/healthz') return next();
+  if (PUBLIC_PATHS.has(c.req.path)) return next();
   const email = c.req.header('X-Auth-Email') || (process.env.NODE_ENV !== 'production' ? c.req.query('fake_email') : null);
-  if (!email) return c.text('unauthorized — request did not pass through the platform proxy', 401);
+  if (!email) {
+    // Visible (never blank) so it's diagnosable from the browser; shows the auth headers we actually received.
+    const seen = ['X-Auth-Email', 'X-Auth-Name', 'X-Auth-Slack-Id'].map((h) => `${h}: ${escapeHtml(c.req.header(h) || '(absent)')}`).join('<br>');
+    return c.html(`<!doctype html><meta charset="utf-8"><title>Not signed in</title>
+<div style="font:15px/1.6 -apple-system,system-ui,sans-serif;max-width:560px;margin:10vh auto;padding:0 24px;color:#0f1419">
+<h2>Not signed in</h2>
+<p>This app expects the platform proxy to set the <code>X-Auth-Email</code> header — it didn't arrive on this request.</p>
+<pre style="background:#f6f7f9;border:1px solid #e4e8ed;border-radius:8px;padding:12px;font:13px ui-monospace,Menlo,monospace;white-space:pre-wrap">${seen}</pre>
+<p>Open <a href="/debug">/debug</a> to see everything the app received.</p></div>`, 401);
+  }
   c.set('user', { email, name: c.req.header('X-Auth-Name') || email, slackId: c.req.header('X-Auth-Slack-Id') || '' });
   await next();
 });
 
 app.get('/healthz', (c) => c.text('ok'));
+
+// Temporary no-auth diagnostic — confirms the container is alive and shows what the proxy forwards
+// (only reachable by users the proxy already let through). Remove once routing/auth is confirmed.
+app.get('/debug', (c) => {
+  const all = c.req.header() || {};
+  const redact = (k) => /cookie|authorization|token|secret|api[-_]?key/i.test(k);
+  const rows = Object.keys(all).sort()
+    .map((k) => `<tr><td style="padding:3px 12px 3px 0;font-weight:600">${escapeHtml(k)}</td><td style="padding:3px 0">${redact(k) ? '«redacted»' : escapeHtml(String(all[k]))}</td></tr>`)
+    .join('');
+  const key = process.env.ANTHROPIC_API_KEY || '';
+  return c.html(`<!doctype html><meta charset="utf-8"><title>debug</title>
+<div style="font:14px/1.6 -apple-system,system-ui,sans-serif;max-width:780px;margin:6vh auto;padding:0 24px;color:#0f1419">
+<h2>✓ pricing-discipline-app is alive</h2>
+<ul>
+<li>node ${escapeHtml(process.version)} · NODE_ENV=<b>${escapeHtml(process.env.NODE_ENV || '(unset)')}</b> · PORT=${escapeHtml(String(process.env.PORT || ''))}</li>
+<li>ANTHROPIC_API_KEY: <b>${key ? 'present (' + key.length + ' chars)' : 'MISSING'}</b></li>
+<li>X-Auth-Email seen: <b>${escapeHtml(c.req.header('X-Auth-Email') || '(absent)')}</b></li>
+</ul>
+<h3>All request headers (cookie/authorization/key values redacted)</h3>
+<table style="border-collapse:collapse;font:12.5px ui-monospace,Menlo,monospace">${rows}</table>
+</div>`);
+});
 
 /* ---------------- layout ---------------- */
 function layout(title, body, user) {
