@@ -9,7 +9,7 @@
 services:
   app:
     build: .
-    container_name: ${APP_NAME:?APP_NAME must be set — the platform sets this at deploy time. Locally: APP_NAME=pricing-discipline docker compose up}-app
+    container_name: ${APP_NAME}-app   # platform sets APP_NAME at deploy; locally: APP_NAME=pricing-discipline docker compose up
     restart: unless-stopped
     env_file: .env
     environment:
