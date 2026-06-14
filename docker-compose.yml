@@ -1,0 +1,23 @@
+# Required by the platform proxy — do NOT change without asking the admin:
+#   - service name must be `app`
+#   - container_name must be exactly ${APP_NAME}-app
+#   - must join the external `raed_platform` network
+#   - must NOT publish host ports (the proxy reaches you over the network)
+#
+# The platform injects shared API keys (incl. ANTHROPIC_API_KEY) into the app's env at deploy time.
+
+services:
+  app:
+    build: .
+    container_name: ${APP_NAME:?APP_NAME must be set — the platform sets this at deploy time. Locally: APP_NAME=pricing-discipline docker compose up}-app
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+    networks:
+      - raed_platform
+
+networks:
+  raed_platform:
+    external: true

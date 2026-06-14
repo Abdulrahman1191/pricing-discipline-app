@@ -1,0 +1,16 @@
+{
+  "name": "pricing-discipline-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI-wrapped venture-pricing diligence tool for Raed Ventures — describe an opportunity, Claude classifies the rock and assembles the sourced deal config, the app renders the interactive 5-block tool.",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.69.0",
+    "@hono/node-server": "^1.13.0",
+    "hono": "^4.6.0"
+  }
+}

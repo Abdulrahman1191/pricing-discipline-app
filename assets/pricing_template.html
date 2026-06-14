@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing Discipline — __DEAL_NAME__</title>
+<style>
+  :root{
+    --ink:#0f1419; --ink2:#3a4452; --mut:#6b7682; --line:#e4e8ed; --line2:#eef1f4;
+    --bg:#f6f7f9; --card:#ffffff; --accent:#0b6e6e; --accent2:#0e8a8a;
+    --warm:#b4540a; --good:#0b7a4b; --bad:#b3261e; --chip:#eef4f4;
+    --lock:#9aa6ad;
+    --mono:"SF Mono",ui-monospace,"Roboto Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+  a{color:var(--accent2);text-decoration:none} a:hover{text-decoration:underline}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px 80px;}
+  header{background:#0f1719;color:#e9eef0;padding:22px 0 0;border-bottom:1px solid #1d2a2c;}
+  .hdr{max-width:1180px;margin:0 auto;padding:0 22px;}
+  .hdr h1{font-size:20px;margin:0 0 3px;font-weight:650;letter-spacing:-.2px;}
+  .hdr .sub{color:#8fa3a5;font-size:12.5px;margin-bottom:6px;}
+  .hdr .sub b{color:#bcd3d4;font-weight:600;}
+  .hdr .meta{font-size:11px;color:#7e9395;margin-bottom:14px;}
+  .hdr .meta b{color:#bcd3d4;}
+  .tabs{display:flex;gap:2px;flex-wrap:wrap;}
+  .tab{padding:10px 15px;font-size:13px;font-weight:550;color:#8fa3a5;cursor:pointer;border:none;background:none;border-radius:7px 7px 0 0;letter-spacing:.1px;display:flex;align-items:center;gap:6px;}
+  .tab:hover:not(.locked){color:#d6e4e5;}
+  .tab.active{background:var(--bg);color:var(--ink);font-weight:650;}
+  .tab.locked{color:#566668;cursor:not-allowed;}
+  .tab .lk{font-size:10px;opacity:.8;}
+  .tab .dot{width:7px;height:7px;border-radius:50%;background:#3a5557;}
+  .tab.done .dot{background:var(--good);}
+  .tab.review .dot{background:var(--warm);}
+  .panel{display:none;padding-top:24px;} .panel.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .lead{font-size:14px;line-height:1.6;color:var(--ink2);max-width:880px;margin:0 0 20px;}
+  .lead b{color:var(--ink);font-weight:600;}
+  h2.sec{font-size:11.5px;text-transform:uppercase;letter-spacing:1.1px;color:var(--mut);font-weight:700;margin:30px 0 12px;display:flex;align-items:center;gap:10px;}
+  h2.sec::after{content:"";flex:1;height:1px;background:var(--line);}
+  .strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 15px;}
+  .stat .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);font-weight:650;margin-bottom:6px;}
+  .stat .v{font-family:var(--mono);font-size:20px;font-weight:600;color:var(--ink);}
+  .stat .v small{font-size:11.5px;color:var(--mut);font-weight:500;}
+  .stat .d{font-size:11px;color:var(--mut);margin-top:3px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px;}
+  .ctrls{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .ctrl .ctitle{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+  .ctrl .cdesc{font-size:11px;color:var(--mut);margin-bottom:10px;line-height:1.45;}
+  .slrow{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+  input[type=range]{flex:1;accent-color:var(--accent);height:4px;}
+  .slval{font-family:var(--mono);font-size:14px;font-weight:650;color:var(--accent);min-width:48px;text-align:right;}
+  .tier-badge{display:inline-block;font-size:11px;font-family:var(--mono);font-weight:600;padding:2px 8px;border-radius:20px;background:var(--chip);color:var(--accent);border:1px solid #cfe3e3;}
+  .outline{font-size:12px;color:var(--ink2);margin-top:8px;line-height:1.5;}
+  .outline b{font-family:var(--mono);color:var(--ink);}
+  .pgrid{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;}
+  .field{display:flex;flex-direction:column;gap:4px;}
+  .field label{font-size:10px;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+  .field input{width:120px;font-family:var(--mono);font-size:14px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;color:var(--ink);}
+  .field input:focus{outline:none;border-color:var(--accent);}
+  .field select{font-family:var(--sans);font-size:13px;padding:7px 9px;border:1px solid var(--line);border-radius:7px;color:var(--ink);background:#fff;cursor:pointer;min-width:200px;}
+  .field select:focus{outline:none;border-color:var(--accent);}
+  .field.wide{flex:1 1 100%;} .field.wide select{width:100%;}
+  .chainflow{display:flex;flex-wrap:wrap;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 10px;}
+  .cstep{flex:1 1 0;min-width:108px;position:relative;padding:4px 14px 4px 12px;}
+  .cstep:not(:last-child)::after{content:"›";position:absolute;right:-4px;top:50%;transform:translateY(-50%);color:#c2ccce;font-size:20px;font-weight:700;}
+  .cstep .ck{font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);font-weight:700;margin-bottom:4px;line-height:1.25;}
+  .cstep .cval{font-family:var(--mono);font-size:16px;font-weight:650;color:var(--ink);line-height:1.15;}
+  .cstep .csub{font-size:9.5px;color:var(--mut);margin-top:2px;font-family:var(--mono);}
+  .cstep.acc .cval{color:var(--accent);}
+  .verdict{border-radius:14px;padding:18px 20px;margin:16px 0 8px;border:1px solid;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;}
+  .verdict.clear{background:#eefaf2;border-color:#bfe6cf;} .verdict.tight{background:#fdf6ea;border-color:#f0dcbb;} .verdict.fail{background:#fdeeed;border-color:#f3c9c5;}
+  .verdict .mv{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--ink);text-align:center;line-height:1;}
+  .verdict .ml{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;margin-top:4px;text-align:center;}
+  .verdict .vtag{font-size:14px;font-weight:700;margin-bottom:5px;}
+  .verdict.clear .vtag{color:var(--good);} .verdict.tight .vtag{color:var(--warm);} .verdict.fail .vtag{color:var(--bad);}
+  .verdict .vline{font-size:12.5px;line-height:1.55;color:var(--ink2);} .verdict .vline b{font-family:var(--mono);color:var(--ink);}
+  table.hm,table.walk{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;}
+  table.hm td,table.hm th,table.walk td,table.walk th{padding:8px 6px;}
+  table.hm .rowh,table.walk th{text-align:left;font-size:11px;color:var(--ink2);font-weight:600;}
+  table.hm .rowh small{display:block;font-size:9px;color:var(--mut);font-family:var(--mono);font-weight:500;}
+  table.hm .tierhead{font-size:10.5px;color:var(--mut);text-align:center;font-weight:700;} table.hm .tierhead small{display:block;font-size:9px;font-weight:500;}
+  table.hm td.cell{text-align:center;font-family:var(--mono);font-weight:600;padding:0;border:2px solid #fff;}
+  table.hm td.cell .cv{display:block;padding:10px 4px;border-radius:5px;font-size:12px;}
+  table.hm td.cell.entry{outline:2px solid var(--accent);outline-offset:-2px;} table.hm td.cell.exit{outline:2px dashed var(--warm);outline-offset:-2px;}
+  table.walk td{border-bottom:1px solid var(--line2);font-family:var(--mono);}
+  table.walk tr.entry{background:#f0f8f7;} table.walk tr.exit{background:#fdf6ea;}
+  table.walk .sc{font-family:var(--sans);font-size:11px;color:var(--ink2);}
+  .tg{font-size:8.5px;padding:1px 5px;border-radius:10px;font-family:var(--sans);font-weight:700;} .tg.in{background:var(--accent);color:#fff;} .tg.out{background:var(--warm);color:#fff;}
+  .note-block{background:#fdf8f3;border:1px solid #f0e0cd;border-radius:10px;padding:13px 15px;font-size:12px;line-height:1.6;color:var(--ink2);margin-top:14px;} .note-block b{color:var(--warm);}
+  .chain-sentence{background:#f0f6f6;border:1px solid #cfe3e3;border-radius:10px;padding:13px 15px;font-size:12.5px;line-height:1.6;color:var(--ink2);margin-top:14px;} .chain-sentence b{color:var(--accent);}
+  /* waterfall / decomposition */
+  .wfrow{display:grid;grid-template-columns:1fr 120px;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line2);font-size:12.5px;}
+  .wfrow .wfl{color:var(--ink2);} .wfrow .wfv{font-family:var(--mono);text-align:right;font-weight:600;}
+  .wfrow .wfv.pos{color:var(--good);} .wfrow .wfv.neg{color:var(--bad);} .wfrow .wfv.price{color:var(--warm);}
+  .gauge{height:30px;border-radius:8px;background:linear-gradient(90deg,#fbe9e7 0%,#fdf6ea 50%,#eefaf2 100%);position:relative;border:1px solid var(--line);}
+  .gauge .needle{position:absolute;top:-5px;width:3px;height:40px;background:var(--ink);border-radius:2px;}
+  .gauge .lab{position:absolute;top:6px;font-size:10px;font-family:var(--mono);color:var(--ink2);}
+  /* moat score */
+  .moatrow{display:grid;grid-template-columns:160px 1fr 40px;gap:12px;align-items:center;padding:8px 0;}
+  .moatrow .ml2{font-size:12.5px;font-weight:600;color:var(--ink);} .moatrow .ml2 small{display:block;font-size:10px;color:var(--mut);font-weight:400;}
+  .moatrow .mscore{font-family:var(--mono);font-weight:700;font-size:16px;text-align:right;color:var(--accent);}
+  .dots5{display:flex;gap:5px;} .dots5 .dt{flex:1;height:10px;border-radius:3px;background:#e7ecec;cursor:pointer;} .dots5 .dt.on{background:var(--accent);}
+  .signbar{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-top:22px;}
+  .signbar .st{font-size:12.5px;color:var(--ink2);} .signbar .st b{color:var(--ink);}
+  .btn{font-family:var(--sans);font-size:13px;font-weight:600;padding:9px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;}
+  .btn:hover{background:var(--accent2);} .btn.ghost{background:#fff;color:var(--accent);} .btn.warm{background:var(--warm);border-color:var(--warm);}
+  .btn.gray{background:#fff;color:var(--mut);border-color:var(--line);}
+  .lockmsg{background:#f1f3f5;border:1px dashed #cdd4d9;border-radius:12px;padding:40px 24px;text-align:center;color:var(--lock);font-size:14px;}
+  .lockmsg .big{font-size:34px;margin-bottom:10px;}
+  .badge-rich{font-family:var(--mono);font-weight:700;} .badge-rich.rich{color:var(--bad);} .badge-rich.cheap{color:var(--good);}
+  .disc{font-size:11px;color:var(--mut);margin-top:20px;line-height:1.6;border-top:1px solid var(--line);padding-top:14px;}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .checkitem{display:flex;gap:9px;align-items:flex-start;padding:7px 0;font-size:12.5px;color:var(--ink2);line-height:1.45;border-bottom:1px solid var(--line2);}
+  .checkitem input{margin-top:2px;accent-color:var(--accent);width:15px;height:15px;}
+  .repblock{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px;background:var(--card);}
+  .repblock h3{font-size:13px;margin:0 0 4px;color:var(--ink);} .repblock .rk{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);font-weight:700;margin-bottom:10px;}
+  .recon{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+  .recon td,.recon th{padding:7px 8px;border-bottom:1px solid var(--line2);text-align:left;}
+  .recon th{font-size:10px;text-transform:uppercase;color:var(--mut);letter-spacing:.5px;}
+  .recon td.bk{font-family:var(--mono);}
+  sup.cite{color:var(--accent2);font-weight:700;font-size:11px;padding:1px 4px;cursor:pointer;background:var(--chip);border-radius:4px;margin-left:1px;border:1px solid #d6e6e6;}
+  sup.cite:hover{background:var(--accent);color:#fff;}
+  .srctable{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .srctable td,.srctable th{padding:11px 12px;border-bottom:1px solid var(--line2);vertical-align:top;text-align:left;}
+  .srctable th{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);}
+  .srctable .num{font-family:var(--mono);font-weight:700;color:var(--accent2);width:28px;}
+  .srctable .lbl{font-weight:650;color:var(--ink);}
+  .srctable .lbl a{color:var(--accent2);}
+  .srctable a.srclink{display:inline-block;font-family:var(--mono);font-size:11px;color:var(--accent2);margin-top:3px;word-break:break-all;cursor:pointer;}
+  .srctable tr.flash{background:#fffbe6;transition:background .4s;}
+  .methodlink{color:var(--accent2);cursor:pointer;font-weight:600;font-size:11px;white-space:nowrap;}
+  .methodlink:hover{text-decoration:underline;}
+  .mlink{color:var(--accent2);cursor:pointer;font-size:11px;margin-left:3px;font-weight:700;}
+  .mlink:hover{color:var(--accent);}
+  .method-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,25,.55);z-index:1000;align-items:center;justify-content:center;padding:20px;}
+  .method-modal{background:#fff;border-radius:14px;max-width:560px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+  .method-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;}
+  .method-head h3{margin:0;font-size:15px;color:var(--ink);}
+  .method-x{border:none;background:none;font-size:16px;color:var(--mut);cursor:pointer;padding:4px 8px;border-radius:6px;}
+  .method-x:hover{background:var(--bg);}
+  .method-body{padding:18px 20px;font-size:13px;line-height:1.65;color:var(--ink2);}
+  .method-body p{margin:0 0 12px;} .method-body b{color:var(--ink);} .method-body ol,.method-body ul{margin:0 0 12px;padding-left:20px;} .method-body li{margin-bottom:6px;}
+  .srctable .kind{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;padding:2px 7px;border-radius:10px;font-weight:700;white-space:nowrap;}
+  .srctable .kind.index{background:#e7f3f3;color:var(--accent);}
+  .srctable .kind.convention{background:#fdf6ea;color:var(--warm);}
+  .bmgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;}
+  .bmcard{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px;}
+  .bmcard h4{font-size:12.5px;margin:0 0 8px;color:var(--ink);}
+  .bmcard .row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line2);font-size:12px;}
+  .bmcard .row:last-child{border-bottom:none;}
+  .bmcard .row .bv{font-family:var(--mono);font-weight:600;color:var(--ink2);}
+</style>
+</head>
+<body>
+<header>
+  <div class="hdr">
+    <h1>Pricing Discipline — __DEAL_NAME__</h1>
+    <div class="sub"><b>__ASSET_CLASS__</b> · __MODE_LABEL__ · block-by-block diligence on the 25-frame Lemkin/O'Driscoll playbook</div>
+    <div class="meta">Sector: <b>__BEDROCK_LABEL__</b><sup class="cite" data-n="2">2</sup> · as of <b>__BEDROCK_DATE__</b> · hold <b>__HOLD__y</b> · target MOIC <b>__TARGET_MOIC__x</b> · <span style="color:#bcd3d4">all benchmarks sourced on the Benchmarking tab →</span></div>
+    <div class="tabs" id="tabs">
+      <button class="tab active" data-p="b1"><span class="dot"></span>① Price</button>
+      <button class="tab locked" data-p="b2"><span class="dot"></span>② Growth Quality <span class="lk">🔒</span></button>
+      <button class="tab locked" data-p="b3"><span class="dot"></span>③ Capital <span class="lk">🔒</span></button>
+      <button class="tab locked" data-p="b4"><span class="dot"></span>④ Defensibility <span class="lk">🔒</span></button>
+      <button class="tab locked" data-p="b5"><span class="dot"></span>⑤ Decision <span class="lk">🔒</span></button>
+      <button class="tab locked" data-p="b6"><span class="dot"></span>⑥ Merge &amp; Report <span class="lk">🔒</span></button>
+      <button class="tab" data-p="bm"><span class="dot" style="background:var(--accent2)"></span>Benchmarking &amp; Sources</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ====================== BLOCK 1 — PRICE ====================== -->
+<section class="panel active" id="b1">
+  <p class="lead"><b>Block 1 — Price.</b> Is the price right? Every private valuation is a spread above a public bedrock. The chain reads left to right: bedrock floor → today's growth tier → the entry multiple you're asked to pay → 85% decay over the hold → the tier the company exits in → exit multiple → exit value → MOIC. <b>This block uses headline growth;</b> Block 2 will strip the fake growth out and re-tier it.</p>
+
+  <div class="strip">
+    <div class="stat"><div class="k">Asked multiple</div><div class="v" id="s_asked">—</div><div class="d" id="s_asked_d">post-money ÷ revenue</div></div>
+    <div class="stat"><div class="k">Sector median (tier)</div><div class="v" id="s_bed">—</div><div class="d" id="s_bed_d">sourced public comps</div></div>
+    <div class="stat"><div class="k">Entry multiple</div><div class="v" id="s_grid">—</div><div class="d" id="s_grid_d">sourced median, this tier</div></div>
+    <div class="stat"><div class="k">vs grid</div><div class="v" id="s_rich">—</div><div class="d">rich / cheap on headline</div></div>
+  </div>
+
+  <div class="ctrls">
+    <div class="ctrl">
+      <div class="ctitle">Deal inputs</div>
+      <div class="cdesc">Pre-loaded from the brief. The entry multiple is read from a <b>sourced public-comp median for this sector</b> by growth tier — there is no synthetic floor or cap. <a class="methodlink" onclick="openMethod('entry')">How the entry multiple is derived ›</a></div>
+      <div class="pgrid">
+        <div class="field"><label>Revenue ($M)</label><input type="number" id="i_rev" step="0.1"></div>
+        <div class="field"><label>Asked post ($M)</label><input type="number" id="i_price" step="1"></div>
+        <div class="field"><label>Target MOIC (x)</label><input type="number" id="i_target" step="0.5"></div>
+      </div>
+      <div class="outline" id="i_sectornote" style="margin-top:8px;"></div>
+    </div>
+    <div class="ctrl">
+      <div class="ctitle">Growth, decay &amp; hold</div>
+      <div class="cdesc">Headline growth sets the entry tier. Decay defaults to 85%; Block 4's erosion read may push it to 70–75%.</div>
+      <div class="slrow"><span style="font-size:11px;color:var(--mut);min-width:54px;">Growth</span><input type="range" id="i_g" min="0" max="150" step="1"><span class="slval" id="i_gv">—</span></div>
+      <div class="slrow"><span style="font-size:11px;color:var(--mut);min-width:54px;">Decay</span><input type="range" id="i_d" min="60" max="95" step="1"><span class="slval" id="i_dv">—</span></div>
+      <div class="slrow"><span style="font-size:11px;color:var(--mut);min-width:54px;">Hold</span><input type="range" id="i_h" min="1" max="10" step="1"><span class="slval" id="i_hv">—</span></div>
+    </div>
+  </div>
+
+  <h2 class="sec">The pricing chain</h2>
+  <div class="chainflow" id="chainflow"></div>
+
+  <div id="verdictHost"></div>
+
+  <h2 class="sec">Decay walk — entry tier → exit tier</h2>
+  <div class="card"><table class="walk" id="walk"></table></div>
+  <div class="chain-sentence" id="chainSentence"></div>
+
+  <h2 class="sec">The ladder, anchored to this bedrock</h2>
+  <div class="card"><table class="hm" id="ladder"></table></div>
+
+  <h2 class="sec">Delta diagnostic — is the upside already priced in? (Frame 4)</h2>
+  <div class="card">
+    <div class="pgrid">
+      <div class="field"><label>Term sheets</label><input type="number" id="d_ts" value="0" step="1"></div>
+      <div class="field"><label>Range width %</label><input type="number" id="d_rw" value="20" step="5"></div>
+      <div class="field"><label>Network passes</label><input type="number" id="d_np" value="0" step="1"></div>
+      <div class="field"><label>Network leads</label><input type="number" id="d_nl" value="1" step="1"></div>
+    </div>
+    <div class="outline" id="d_out" style="margin-top:12px;"></div>
+  </div>
+
+  <div id="mtrHost"></div>
+
+  <div class="signbar">
+    <div class="st" id="b1_st">Review the price read, then sign off to unlock <b>Block 2 — Growth Quality</b>.</div>
+    <button class="btn" id="b1_sign">Sign off Block 1 ✓</button>
+  </div>
+</section>
+
+<!-- ====================== BLOCK 2 — GROWTH QUALITY ====================== -->
+<section class="panel" id="b2">
+  <div class="lockmsg" id="b2_lock"><div class="big">🔒</div>Locked. Sign off <b>Block 1 — Price</b> to unlock Growth Quality.</div>
+  <div id="b2_body" style="display:none;">
+    <p class="lead"><b>Block 2 — Growth Quality.</b> Is the growth real? Strip price increases out of the headline — price is monetization, not demand. The <b>real growth rate</b> this block computes re-tiers the entry multiple from Block 1. A deal that's "in line" on headline growth is frequently "rich" on real growth.</p>
+
+    <h2 class="sec">Revenue waterfall — real vs fake growth (Frame 6)</h2>
+    <div class="twocol">
+      <div class="card">
+        <div class="cdesc" style="font-size:11px;color:var(--mut);margin-bottom:8px;">Enter the trailing-12M waterfall in $M. Real = (new logos + expansion − churn − downgrades) ÷ starting ARR. Price increases are fake growth.</div>
+        <div class="pgrid">
+          <div class="field"><label>Starting ARR</label><input type="number" id="w_start" step="0.1"></div>
+          <div class="field"><label>New logo</label><input type="number" id="w_new" value="0" step="0.1"></div>
+          <div class="field"><label>Expansion</label><input type="number" id="w_exp" value="0" step="0.1"></div>
+          <div class="field"><label>Churn</label><input type="number" id="w_churn" value="0" step="0.1"></div>
+          <div class="field"><label>Downgrades</label><input type="number" id="w_down" value="0" step="0.1"></div>
+          <div class="field"><label>Price increases</label><input type="number" id="w_price" value="0" step="0.1"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="wfrow"><span class="wfl">Headline growth</span><span class="wfv" id="w_head">—</span></div>
+        <div class="wfrow"><span class="wfl">Real (organic) growth</span><span class="wfv pos" id="w_real">—</span></div>
+        <div class="wfrow"><span class="wfl">Fake (price) growth</span><span class="wfv price" id="w_fake">—</span></div>
+        <div class="wfrow"><span class="wfl">GRR</span><span class="wfv" id="w_grr">—</span></div>
+        <div class="wfrow"><span class="wfl">NRR</span><span class="wfv" id="w_nrr">—</span></div>
+        <div class="outline" id="w_retier" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <h2 class="sec">Maiming gauge — NRR &gt; GRR trajectory (Frame 7)</h2>
+    <div class="card">
+      <div class="cdesc" style="font-size:11px;color:var(--mut);margin-bottom:10px;">Enter NRR two years ago vs today. Stable GRR + falling NRR = maiming. The drift is the disruption — it sets whether decay should run faster than 85%.</div>
+      <div class="pgrid">
+        <div class="field"><label>NRR 2y ago %</label><input type="number" id="m_nrr0" value="0" step="1"></div>
+        <div class="field"><label>NRR today %</label><input type="number" id="m_nrr1" value="0" step="1"></div>
+      </div>
+      <div class="outline" id="m_out" style="margin-top:12px;"></div>
+    </div>
+
+    <h2 class="sec">Reacceleration base rate (Frame 8) · Pull-forward (Frame 9) · 1% TAM rule (Frame 10)</h2>
+    <div class="twocol">
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Reacceleration claim</div>
+        <label class="checkitem"><input type="checkbox" id="r_claim"> Founder claims growth reaccelerates next year</label>
+        <label class="checkitem"><input type="checkbox" id="r_mech"> Hard mechanism evidence (pilot conversion lift, WTP data, deal velocity)</label>
+        <div class="outline" id="r_out" style="margin-top:10px;"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">1% TAM rule</div>
+        <div class="pgrid">
+          <div class="field"><label>Stated TAM ($M)</label><input type="number" id="t_tam" value="0" step="100"></div>
+          <div class="field"><label>Target ARR ($M)</label><input type="number" id="t_tgt" value="0" step="10"></div>
+        </div>
+        <div class="outline" id="t_out" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="signbar">
+      <div class="st" id="b2_st">Real growth re-tiers Block 1. Sign off to unlock <b>Block 3 — Capital</b>.</div>
+      <div style="display:flex;gap:8px;"><button class="btn gray" data-reopen="1">Reopen Block 1</button><button class="btn" id="b2_sign">Sign off Block 2 ✓</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== BLOCK 3 — CAPITAL ====================== -->
+<section class="panel" id="b3">
+  <div class="lockmsg" id="b3_lock"><div class="big">🔒</div>Locked. Sign off <b>Block 2 — Growth Quality</b> to unlock Capital.</div>
+  <div id="b3_body" style="display:none;">
+    <p class="lead"><b>Block 3 — Capital.</b> Does the capital math work? Burn multiple breaks below 75% gross margin — adjust it. Then the fund math: MOIC at <b>diluted</b> ownership across grind / solid / breakout. A magnificent $100M-ARR business can still be un-financeable for venture. This block's diluted-ownership MOIC supersedes Block 1's entry-ownership number.</p>
+
+    <h2 class="sec">Burn multiple — and where it breaks (Frame 11, 15) <a class="methodlink" onclick="openMethod('burn')" style="font-size:11px;text-transform:none;letter-spacing:0;margin-left:8px;">how burn is derived ›</a> <a class="methodlink" onclick="openMethod('regcap')" style="font-size:11px;text-transform:none;letter-spacing:0;margin-left:6px;">return on regulatory capital ›</a></h2>
+    <div class="card">
+      <div class="pgrid">
+        <div class="field"><label>Net burn 12M ($M)</label><input type="number" id="c_burn" value="0" step="0.1"></div>
+        <div class="field"><label>Net new ARR 12M ($M)</label><input type="number" id="c_nnarr" value="0" step="0.1"></div>
+        <div class="field"><label>Gross margin %</label><input type="number" id="c_gm" value="75" step="1"></div>
+      </div>
+      <div class="outline" id="c_burn_out" style="margin-top:12px;"></div>
+    </div>
+
+    <h2 class="sec">Fund-returner math at diluted ownership (Frame 13)</h2>
+    <div class="card">
+      <div class="pgrid">
+        <div class="field"><label>Check size ($M)</label><input type="number" id="c_check" step="0.1"></div>
+        <div class="field"><label>Entry ownership %</label><input type="number" id="c_own" value="12" step="0.5"></div>
+        <div class="field"><label>Future dilution %</label><input type="number" id="c_dil" value="50" step="5"></div>
+        <div class="field"><label>Fund size ($M)</label><input type="number" id="c_fund" value="150" step="10"></div>
+      </div>
+      <div class="card" style="margin-top:12px;background:#f7f9f9;"><table class="walk" id="c_scen"></table></div>
+      <div class="outline" id="c_fund_out" style="margin-top:10px;"></div>
+    </div>
+
+    <h2 class="sec">Hubristic round (Frame 12) · Positional spend (Frame 14)</h2>
+    <div class="twocol">
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Hubristic-round signals</div>
+        <label class="checkitem"><input type="checkbox" id="h1"> FOMO pace replacing diligence (closing fast, diligence after term sheet)</label>
+        <label class="checkitem"><input type="checkbox" id="h2"> Exit math requires near-perfect execution</label>
+        <label class="checkitem"><input type="checkbox" id="h3"> Round size exceeds genuine operational need</label>
+        <label class="checkitem"><input type="checkbox" id="h4"> Priced off a recent peer IPO / validation event</label>
+        <div class="outline" id="h_out" style="margin-top:10px;"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Positional discipline</div>
+        <div class="field" style="margin-bottom:8px;"><label>Market position</label><select id="p_pos"><option value="1">#1 — category leader</option><option value="2" selected>#2–3 — challenger</option><option value="x">Outside top 3</option></select></div>
+        <label class="checkitem"><input type="checkbox" id="p_spend"> Spending like the category leader</label>
+        <label class="checkitem"><input type="checkbox" id="p_shift"> A structural shift is resetting the contest</label>
+        <div class="outline" id="p_out" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="signbar">
+      <div class="st" id="b3_st">Diluted-ownership MOIC supersedes Block 1. Sign off to unlock <b>Block 4 — Defensibility</b>.</div>
+      <div style="display:flex;gap:8px;"><button class="btn gray" data-reopen="2">Reopen Block 2</button><button class="btn" id="b3_sign">Sign off Block 3 ✓</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== BLOCK 4 — DEFENSIBILITY ====================== -->
+<section class="panel" id="b4">
+  <div class="lockmsg" id="b4_lock"><div class="big">🔒</div>Locked. Sign off <b>Block 3 — Capital</b> to unlock Defensibility.</div>
+  <div id="b4_body" style="display:none;">
+    <p class="lead"><b>Block 4 — Defensibility.</b> Moats don't fail — they shrink. The question is the rate of erosion, not whether the moat exists. Score four dimensions, read the Fortnite erosion rate and maiming signature, then set the decay rate Block 1 should be using.</p>
+
+    <h2 class="sec">Four-dimension moat score (1–5)</h2>
+    <div class="card" id="moatHost"></div>
+
+    <h2 class="sec">Fortnite erosion (Frame 16) · Convergence test (Frame 19)</h2>
+    <div class="twocol">
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Erosion rate</div>
+        <div class="field" style="margin-bottom:8px;"><label>How fast is the defensible perimeter shrinking?</label><select id="e_rate"><option value="slow">Slow — durable distribution/regulatory lock</option><option value="mod" selected>Moderate — some commoditization underway</option><option value="fast">Fast — core capabilities already commoditized by AI</option></select></div>
+        <div class="outline" id="e_out"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Convergence test</div>
+        <label class="checkitem"><input type="checkbox" id="cv_nl"> Workflow = "natural-language interface + AI does the work"</label>
+        <label class="checkitem"><input type="checkbox" id="cv_phys"> Requires physical assets / regulatory approvals / infra access</label>
+        <div class="field" style="margin-top:8px;"><label>Company's layer</label><select id="cv_layer"><option value="agent">The consolidating agent (inherits TAM)</option><option value="point" selected>An absorbed point solution (decaying)</option><option value="infra">Surviving infra / regulatory layer</option></select></div>
+        <div class="outline" id="cv_out" style="margin-top:8px;"></div>
+      </div>
+    </div>
+
+    <h2 class="sec">Integration density (Frame 18) · Bargain trap (Frame 20)</h2>
+    <div class="twocol">
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Integration density — use intensity, not count</div>
+        <div class="pgrid">
+          <div class="field"><label>Avg integrations / customer</label><input type="number" id="ig_avg" value="0" step="1"></div>
+          <div class="field"><label>% customers using 3+</label><input type="number" id="ig_pct" value="0" step="5"></div>
+        </div>
+        <div class="outline" id="ig_out" style="margin-top:10px;"></div>
+      </div>
+      <div class="card" id="bargainCard">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Bargain trap</div>
+        <label class="checkitem"><input type="checkbox" id="bg_id"> A specific over-priced bear case is identifiable</label>
+        <div class="outline" id="bg_out" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="signbar">
+      <div class="st" id="b4_st">Erosion rate sets Block 1's decay. Sign off to unlock <b>Block 5 — Decision</b>.</div>
+      <div style="display:flex;gap:8px;"><button class="btn gray" data-reopen="3">Reopen Block 3</button><button class="btn" id="b4_sign">Sign off Block 4 ✓</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== BLOCK 5 — DECISION ====================== -->
+<section class="panel" id="b5">
+  <div class="lockmsg" id="b5_lock"><div class="big">🔒</div>Locked. Sign off <b>Block 4 — Defensibility</b> to unlock Decision.</div>
+  <div id="b5_body" style="display:none;">
+    <p class="lead"><b>Block 5 — Decision.</b> The moment you say yes or no. The Three-Box gate first, then the structural entry-vs-TAM check, the Fight/Focus/Fly read, the money-as-truth-serum signals — synthesized with the cascade into a recommended number.</p>
+
+    <h2 class="sec">The Three-Box Test (Frame 21) — gate, asked in order</h2>
+    <div class="card">
+      <label class="checkitem"><input type="checkbox" id="tb_mkt"> <b>Market</b> — category large enough for a venture outcome at the entry price</label>
+      <label class="checkitem"><input type="checkbox" id="tb_team"> <b>Team</b> — capable of capturing that outcome</label>
+      <label class="checkitem"><input type="checkbox" id="tb_risk"> <b>Residual risk</b> — nothing specific outside boxes 1–2 that kills it</label>
+      <div class="outline" id="tb_out" style="margin-top:10px;"></div>
+    </div>
+
+    <h2 class="sec">Entry price vs TAM (Frame 22) · Fight/Focus/Fly (Frame 23) · Truth serum (Frame 24)</h2>
+    <div class="twocol">
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Entry vs TAM</div>
+        <div class="outline" id="ev_out"></div>
+        <div style="height:10px;"></div>
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Strategy: pitched vs executed</div>
+        <div class="pgrid">
+          <div class="field"><label>Pitched</label><select id="ff_pitch"><option>Fight</option><option>Focus</option><option>Fly</option></select></div>
+          <div class="field"><label>Executing</label><select id="ff_exec"><option>Fight</option><option>Focus</option><option>Fly</option></select></div>
+        </div>
+        <div class="outline" id="ff_out" style="margin-top:8px;"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle" style="font-size:12px;font-weight:700;margin-bottom:6px;">Money as truth serum</div>
+        <label class="checkitem"><input type="checkbox" id="ms_gp"> Founder GP commit (personal money into the round)</label>
+        <label class="checkitem"><input type="checkbox" id="ms_sec"> Heavy insider secondary selling in a hot round</label>
+        <label class="checkitem"><input type="checkbox" id="ms_pro"> Prior-round lead taking full pro-rata</label>
+        <div class="outline" id="ms_out" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <h2 class="sec">Recommended number</h2>
+    <div id="b5_verdict"></div>
+    <div class="card">
+      <div class="pgrid">
+        <div class="field"><label>Recommended post ($M)</label><input type="number" id="rec_post" step="1"></div>
+        <div class="field"><label>at multiple (x)</label><input type="number" id="rec_mult" step="0.5" disabled></div>
+      </div>
+      <div class="outline" id="rec_out" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="signbar">
+      <div class="st" id="b5_st">Sign off to unlock <b>Block 6 — Merge &amp; Report</b>.</div>
+      <div style="display:flex;gap:8px;"><button class="btn gray" data-reopen="4">Reopen Block 4</button><button class="btn" id="b5_sign">Sign off Block 5 ✓</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== BLOCK 6 — MERGE & REPORT ====================== -->
+<section class="panel" id="b6">
+  <div class="lockmsg" id="b6_lock"><div class="big">🔒</div>Locked. Sign off <b>Block 5 — Decision</b> to assemble the report.</div>
+  <div id="b6_body" style="display:none;">
+    <p class="lead"><b>Block 6 — Merge &amp; Report.</b> The five signed-off blocks, reconciled. The cascade table shows where each block corrected an earlier assumption. Export to a shareable HTML report or copy the IC summary for the team.</p>
+
+    <div id="mergeVerdict"></div>
+
+    <h2 class="sec">The cascade — where each block corrected the last</h2>
+    <div class="card">
+      <table class="recon" id="reconTable">
+        <tr><th>Assumption</th><th>Block 1 (headline)</th><th>Corrected</th><th>By</th></tr>
+      </table>
+    </div>
+
+    <h2 class="sec">Block summaries</h2>
+    <div id="reportBlocks"></div>
+
+    <div class="signbar">
+      <div class="st">Export the shareable team report or copy the IC summary line.</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn ghost" id="copyIC">Copy IC summary</button>
+        <button class="btn" id="exportReport">Download HTML report</button>
+      </div>
+    </div>
+    <div class="disc">Generated by the pricing-discipline skill · 25-frame Lemkin/O'Driscoll playbook · bedrock rocks sourced from aggregators (Aventis, BVP, Meritech, F-Prime, Damodaran), not private rounds. Block-by-block diligence; the cascade reconciliation is the product.</div>
+  </div>
+</section>
+
+<!-- ====================== BENCHMARKING & SOURCES ====================== -->
+<section class="panel" id="bm">
+  <p class="lead"><b>Benchmarking &amp; Sources.</b> Every benchmark this tool applies, with where it comes from. Numbers carry a clickable superscript<sup class="cite" data-n="1">1</sup> throughout the tool and report; click any marker to land here. Sourced medians are linked to source; the growth-tier boundaries and the decay/moat heuristics are marked honestly as Lemkin/O'Driscoll convention — judgment, not measured market data.</p>
+
+  <h2 class="sec">Sourced sector multiples — reference library</h2>
+  <p style="font-size:12px;color:var(--mut);margin:-4px 0 12px;">Public-comp <b>medians</b> by sector (averages distorted by outliers are not used). Rendered from the skill's sourced library — no numbers are hardcoded in this tool. Growth-tier <i>boundaries</i> are convention<sup class="cite" data-n="7">7</sup>; the <i>multiples</i> are sourced.</p>
+  <div class="bmgrid" id="benchLibrary"></div>
+  <div class="bmcard" style="margin-bottom:18px;border-color:var(--accent);"><h4>This deal's sector multiples (applied above)</h4>
+    <div id="dealTiers" style="font-size:12px;color:var(--ink2);"></div>
+  </div>
+
+  <h2 class="sec">Numbered sources</h2>
+  <div class="card" style="padding:0;"><table class="srctable" id="srctable"></table></div>
+  <div class="disc">Multiples are sourced public-comp <b>medians</b> by sector and growth tier — no synthetic ladder, no cap. Segment medians are used, never averages (which outliers distort). The skill re-verifies any sector median older than 20 days before pricing, and prefers the user's licensed data (PitchBook comps via connector or Co-Work browser) when available. Growth-tier boundaries are convention; the multiples are sourced. As-of dates travel with each source in the table above.</div>
+</section>
+<!-- ====================== METHODOLOGY OVERLAY ====================== -->
+<div id="methodOverlay" class="method-overlay" onclick="if(event.target===this)closeMethod()">
+  <div class="method-modal">
+    <div class="method-head"><h3 id="methodTitle">Methodology</h3><button class="method-x" onclick="closeMethod()">✕</button></div>
+    <div class="method-body" id="methodBody"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* =================== STATE (in-memory only; NEVER localStorage) =================== */
+const D = __DEAL_JSON__;
+const signed = {b1:false,b2:false,b3:false,b4:false,b5:false};
+const review = {b2:false,b3:false,b4:false,b5:false};
+
+/* sources can be supplied per-deal via D.sources; falls back to the default registry below */
+/* ===== SOURCED MULTIPLE ENGINE — no synthetic ladder, no cap =====
+   D.tiers is a sourced table: [{name, min, mult, exitMult, src}] high→low by growth.
+   `mult` = entry EV/Revenue median for that growth tier (from a dated public source).
+   `exitMult` = the multiple a company decayed INTO that tier exits at (same sourced table).
+   For mature/<10%, mult may be null → valued on EV/EBITDA (the tool flags it). */
+const TIERS = (Array.isArray(D.tiers)?D.tiers.slice():[]).sort((a,b)=>(b.min||0)-(a.min||0));
+if(!TIERS.length)console.error('pricing-discipline: D.tiers is empty — sourced multiples are required.');
+function tierFor(g){for(let i=0;i<TIERS.length;i++){if(g>=TIERS[i].min)return TIERS[i];}return TIERS[TIERS.length-1]||{name:'—',min:0,mult:null,exitMult:null};}
+function entryMultFor(g){const t=tierFor(g);return t.mult;}
+function exitMultFor(g){const t=tierFor(g);return (t.exitMult!=null?t.exitMult:t.mult);}
+function tierName(g){return tierFor(g).name;}
+/* HTML-escape any config-derived string before it enters innerHTML; allowlist URLs to http(s). */
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function safeUrl(u){return /^https?:\/\//i.test(String(u||''))?u:'#';}
+function fmt(x,dp){dp=dp==null?1:dp;if(x==null)return '—';const p=Math.pow(10,dp);return (Math.round(x*p)/p).toFixed(dp);}
+function money(x){if(x==null)return '—';return x>=1000?'$'+fmt(x/1000,2)+'B':'$'+fmt(x,0)+'M';}
+function num(id){return +document.getElementById(id).value||0;}
+function hmColor(v){if(v==null)return{bg:'#f7f9f9',fg:'#b6c0c0'};const lo=D.heatLo||2,hi=D.heatHi||25;const t=Math.min(1,Math.max(0,(v-lo)/(hi-lo)));const L=95-(t*72);return{bg:`hsl(183,42%,${L}%)`,fg:L<55?'#fff':'#0f1419'};}
+
+/* ===== METHODOLOGY POP-UP ===== */
+function openMethod(key){
+  const m=METHODS[key];if(!m)return;
+  document.getElementById('methodTitle').innerHTML=m.title;
+  document.getElementById('methodBody').innerHTML=m.body;
+  document.getElementById('methodOverlay').style.display='flex';
+}
+function closeMethod(){document.getElementById('methodOverlay').style.display='none';}
+const METHODS={
+  entry:{title:'How the entry multiple is derived',body:`<p>The entry multiple is <b>not</b> built from a synthetic floor × growth ratio. It is read directly from a <b>sourced table of public-comp medians for this sector</b>, indexed by the company's current growth tier.</p>
+    <p><b>Steps:</b></p><ol><li>Place the company in a growth tier (Hypergrowth &gt;40%, High 30–40%, Mid 20–30%, Slow 10–20%, Mature &lt;10%).</li><li>Read the sourced median EV/Revenue multiple for that tier in this sector.</li><li>Compare to the asked multiple (valuation ÷ revenue). The gap is the rich/cheap read.</li></ol>
+    <p>Medians are used, never averages (averages are distorted by a few outliers) and never a single ticker. Every figure carries its source and as-of date on the Benchmarking tab.</p>
+    <p style="color:var(--mut)"><b>This deal's sector:</b> ${esc(D.sectorLabel)}. Source: ${esc(D.tierSource)}.</p>`},
+  decay:{title:'The 85% growth-decay rule',body:`<p>Each year, a company's growth rate is modelled as ~85% of the prior year's. A 40% grower goes 40 → 34 → 29 → 25…</p>
+    <p>This is a <b>practitioner convention</b> (Lemkin/O'Driscoll), not a sourced market figure — it's a reasonable default for how growth fades, and you can adjust the rate. Maiming (Block 2) or fast erosion (Block 4) pushes it toward 70–75%; exceptional retention (NRR &gt;130%) can justify 90%.</p>
+    <p>It matters because <b>the exit multiple is set by the decayed growth tier</b> — a company that decays from Hypergrowth to Slow exits at the Slow-tier multiple, which is where most of the multiple compression comes from.</p>`},
+  exit:{title:'How the exit multiple is derived',body:`<p>The exit multiple uses the <b>same sourced sector table</b> as entry — but read at the company's <b>decayed</b> growth tier after the hold.</p>
+    <p><b>Steps:</b></p><ol><li>Decay current growth over the hold via the 85% rule → exit growth rate.</li><li>Place that exit growth in its tier.</li><li>Read the sourced median multiple for that tier in this sector.</li><li>Below 10% growth, the sector is valued on <b>EV/EBITDA</b>, not revenue — the tool flags this and stops applying a revenue multiple.</li></ol>
+    <p>Entry and exit use one consistent sourced table, so the only thing that moves the multiple between them is the change in growth tier — which is exactly what should drive it.</p>
+    <p style="color:var(--mut)"><b>This deal's sector:</b> ${esc(D.sectorLabel)}. Source: ${esc(D.tierSource)}.</p>`},
+  moic:{title:'How MOIC is calculated',body:`<p><b>MOIC = exit value ÷ entry cost</b>, at the relevant ownership.</p>
+    <ul><li><b>Exit value</b> = exit multiple × exit revenue (revenue compounded at the decayed growth path).</li><li><b>Entry-ownership MOIC</b> (Block 1, before Block 3) = exit value ÷ asked post-money.</li><li><b>Diluted MOIC</b> (after Block 3) = (exit value × diluted ownership) ÷ check size, where diluted ownership = entry ownership × (1 − future dilution).</li></ul>
+    <p>Diluted ownership is the honest number — a 12% entry stake typically dilutes to ~6% by exit across later rounds. The verdict compares MOIC to your target.</p>`},
+  burn:{title:'Burn multiple (and the GM adjustment)',body:`<p><b>Burn multiple = net burn ÷ net new ARR</b> — capital burned per dollar of new recurring revenue (David Sacks, Craft Ventures 2020). Bands: &lt;1x amazing, 1–2x good, 2–3x suspect, &gt;3x dangerous.</p>
+    <p>The bands assume ~75% gross margin. Below that, each new ARR dollar throws off less gross profit, so the tool computes a <b>GM-adjusted</b> burn = net burn ÷ (net new ARR × gross margin). At 50% GM a reported 1.5x is really ~2.25x.</p>
+    <p>Source: medium.com/craft-ventures/the-burn-multiple-51a7e43cb200.</p>`},
+  regcap:{title:'Return on regulatory capital',body:`<p>For fintech that holds regulatory capital to operate (custody, settlement, lending), the SaaS burn multiple mismeasures efficiency. The right metric is <b>revenue per dollar of locked regulatory capital</b> = annual revenue ÷ regulatory capital required.</p>
+    <p>It captures whether the business generates enough return on the capital it must lock up to hold its licence — a constraint pure-software businesses don't have. Track it against peers and alongside revenue per dollar of settlement/transaction volume.</p>
+    <p style="color:var(--mut)">Frame 15, Lemkin/O'Driscoll cross-vertical discipline.</p>`}
+};
+
+/* derived store the cascade reads from */
+const X = {realGrowth:null, decay:0.85, dilOwn:null, dilMOIC:null, erosion:'mod', maiming:false, recPost:null, recMult:null, verdict:null, moat:[3,3,3,3]};
+const SOURCES=[
+  {n:1, label:"Finro — Fintech Valuation Multiples Q1 2026", url:"https://www.finrofca.com/news/fintech-valuation-multiples-q1-2026", note:"416-company fintech dataset. Blockchain/digital-asset median 14.2x EV/Revenue (avg 26.6x — use median). Payments median 3.6x, WealthTech 16.2x, Lending ~2.5x. Use segment medians, never averages.", kind:"index"},
+  {n:2, label:"valueaddvc — Public SaaS Valuations", url:"https://valueaddvc.com/saas-valuations", note:"Public SaaS median ~8.5x EV/NTM (mid-2026). >40% growth = 2–3x slow-growth multiple; NRR <100% cuts 30–50%. AI-native 15–40x.", kind:"index"},
+  {n:3, label:"multiples.vc — Coinbase comp", url:"https://multiples.vc/public-comps/coinbase-valuation-multiples", note:"Listed digital-asset infra reference: ~$47B EV, 75% gross / 39% EBITDA margin, revenue −15% YoY (May 2026). Shows category leader is profitable but low-growth — exit multiples compress as growth decays.", kind:"index"},
+  {n:4, label:"Aswath Damodaran — NYU Stern data", url:"https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datacurrent.html", note:"Industry EV/EBITDA, EV/Sales, margins (Jan 2026). Marketplace (online-retail EV/Sales ~2–3x), healthcare, hardware rocks.", kind:"index"},
+  {n:5, label:"Windsor Drake — Fintech & SaaS Multiples 2026", url:"https://windsordrake.com/fintech-valuation-multiples/", note:"Payments 4–6x revenue / 8–12x EBITDA for established operators; lending ~2.5x. Private/public gap ~30–50%.", kind:"index"},
+  {n:6, label:"David Sacks — 'The Burn Multiple' (Craft Ventures, 2020)", url:"https://medium.com/craft-ventures/the-burn-multiple-51a7e43cb200", note:"Burn multiple definition and bands: <1x amazing / 1–2x good / 2–3x suspect / >3x dangerous. GM-adjust below 75%.", kind:"index"},
+  {n:7, label:"Lemkin / O'Driscoll pricing convention", url:null, note:"Practitioner heuristic — no public index. The 85% annual growth-decay rule, the 1-in-3 reacceleration base rate, the 1% TAM rule, integration-density thresholds, Fortnite Effect, maiming-vs-killing, category convergence, and return-on-regulatory-capital framing. Growth-tier BOUNDARIES (>40%/30%/20%/10%) are convention; the MULTIPLES attached to them are sourced (1–5). Judgment, not measured data.", kind:"convention"}
+];
+const SRC = (Array.isArray(D.sources) && D.sources.length)?D.sources:SOURCES;
+function src(...ns){return ns.map(n=>`<sup class="cite" data-n="${esc(n)}" title="${esc((SRC.find(s=>s.n===n)||{}).label||'')}">${esc(n)}</sup>`).join('');}
+function wireCites(){document.querySelectorAll('sup.cite').forEach(c=>{if(c._wired)return;c._wired=true;c.style.cursor='pointer';c.addEventListener('click',()=>{show('bm');const n=+c.dataset.n;const rows=document.querySelectorAll('#srctable tbody tr');const tr=rows[n-1];if(tr){if(tr.scrollIntoView)tr.scrollIntoView({behavior:'smooth',block:'center'});tr.classList.add('flash');setTimeout(()=>tr.classList.remove('flash'),1200);}});});}
+
+/* =================== TABS / GATING =================== */
+const order=['b1','b2','b3','b4','b5','b6'];
+function tabEl(p){return document.querySelector(`.tab[data-p="${p}"]`);}
+function unlocked(p){if(p==='bm')return true;const i=order.indexOf(p);if(i===0)return true;return signed[order[i-1]];}
+function refreshTabs(){
+  order.forEach((p,i)=>{
+    const t=tabEl(p);t.classList.remove('locked','done','review');
+    const lk=t.querySelector('.lk');
+    if(!unlocked(p)){t.classList.add('locked');if(lk)lk.textContent='🔒';}
+    else{if(lk)lk.textContent='';}
+    if(signed[p])t.classList.add('done');
+    if(review[p])t.classList.add('review');
+  });
+}
+function show(p){if(!unlocked(p))return;document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));document.getElementById(p).classList.add('active');tabEl(p).classList.add('active');
+  // keep Block 5's recommended number in sync with the latest cascade whenever it is viewed
+  if(p==='b5'){const b=document.getElementById('b5_body');if(b&&b.style.display!=='none')runB5();}}
+document.getElementById('tabs').addEventListener('click',e=>{const t=e.target.closest('.tab');if(t)show(t.dataset.p);});
+
+function revealBody(b){const lock=document.getElementById(b+'_lock'),body=document.getElementById(b+'_body');if(lock)lock.style.display='none';if(body)body.style.display='block';}
+function signOff(b){
+  signed[b]=true;
+  const next={b1:'b2',b2:'b3',b3:'b4',b4:'b5',b5:'b6'}[b];
+  if(next){revealBody(next);review[next]=false;}
+  if(b==='b1'){pushRealGrowthDefault();}
+  if(b==='b2'){applyCascadeFromB2();}
+  if(b==='b3'){applyCascadeFromB3();}
+  if(b==='b4'){applyCascadeFromB4();}
+  if(b==='b5'){buildMerge();}
+  refreshTabs(); if(next)show(next);
+}
+function reopen(n){const b='b'+n;signed[b]=false;review[b]=true;for(let i=n+1;i<=5;i++){if(signed['b'+i])review['b'+i]=true;}refreshTabs();show(b);}
+document.querySelectorAll('[data-reopen]').forEach(btn=>btn.addEventListener('click',()=>reopen(+btn.dataset.reopen)));
+['b1','b2','b3','b4','b5'].forEach(b=>document.getElementById(b+'_sign').addEventListener('click',()=>signOff(b)));
+
+/* =================== BLOCK 1 — PRICE =================== */
+function computeChain(){
+  const R0=num('i_rev'),P=num('i_price'),T=num('i_target');
+  const g0=num('i_g')/100, d=num('i_d')/100, H=Math.max(1,Math.round(num('i_h')));
+  // use real growth once block 2 is in
+  const gEntry = (X.realGrowth!=null && (signed.b2||review.b2)) ? X.realGrowth : g0;
+  const Me=entryMultFor(gEntry);                 // sourced sector median for current tier
+  const Ma=R0>0?P/R0:0, rich=Me?(Ma/Me-1):0;
+  let rev=R0; const rows=[{y:0,g:gEntry,rev:R0}];
+  for(let y=1;y<=H;y++){const gy=gEntry*Math.pow(d,y);rev=rev*(1+gy);rows.push({y,g:gy,rev});}
+  const gH=gEntry*Math.pow(d,H);
+  const Mx=exitMultFor(gH), fcfExit=(Mx==null);   // null → sector valued on EBITDA at this growth
+  const Vx=(Mx==null?0:Mx)*rev;
+  // MOIC: diluted once block 3 is in
+  let moic, ownNote;
+  if(X.dilOwn!=null && (signed.b3||review.b3)){const proceeds=Vx*X.dilOwn; moic=proceeds/(X.checkSize||1); ownNote='diluted';}
+  else {moic=P>0?Vx/P:0; ownNote='entry';}
+  let cls,tag;
+  if(fcfExit){cls='fail';tag='Exit decays below 10% growth — sector prices on EBITDA, no venture return at this decay/hold';}
+  else if(moic>=T){cls='clear';tag='Clears — the price returns the target at exit';}
+  else if(moic>=T*0.6){cls='tight';tag='Tight — needs slower decay, expansion, or a lower entry price';}
+  else{cls='fail';tag="Doesn't clear — pass on price";}
+  return {R0,P,T,g0,gEntry,d,H,Me,Ma,rich,gH,Mx,fcfExit,entryTier:tierName(gEntry),exitTier:tierName(gH),Vx,rev,moic,ownNote,rows,cls,tag};
+}
+function renderChain(c){
+  const richTxt=(c.rich>=0?'+':'')+Math.round(c.rich*100)+'%';
+  const steps=[
+    {k:(c.gEntry!==c.g0?'Real growth':'Growth'),v:Math.round(c.gEntry*100)+'%',sub:c.entryTier+' tier'},
+    {k:'Entry multiple',v:fmt(c.Me)+'x',sub:'sourced median · asked '+fmt(c.Ma)+'x · '+richTxt,acc:true,cite:'M'},
+    {k:Math.round(c.d*100)+'% decay × '+c.H+'y',v:'×'+fmt(c.d,2),sub:Math.round(c.gEntry*100)+'%→'+Math.round(c.gH*100)+'%',cite:'D'},
+    {k:'Exit growth',v:Math.round(c.gH*100)+'%',sub:c.exitTier+' tier'},
+    {k:'Exit multiple',v:c.fcfExit?'FCF':fmt(c.Mx)+'x',sub:c.fcfExit?'<10% → value on FCF':'public-tier × '+money(c.rev)},
+    {k:'Exit value',v:money(c.Vx),sub:c.ownNote==='diluted'?'× '+fmt(X.dilOwn*100)+'% own':'÷ '+money(c.P),acc:true},
+    {k:'MOIC',v:fmt(c.moic)+'x',sub:c.ownNote+' · vs '+fmt(c.T)+'x',acc:true,cite:'MO'}
+  ];
+  document.getElementById('chainflow').innerHTML=steps.map(s=>{let mark='';if(s.cite==='M')mark='<span class="mlink" onclick="openMethod(\'entry\')">ⓘ</span>';else if(s.cite==='D')mark='<span class="mlink" onclick="openMethod(\'decay\')">ⓘ</span>';else if(s.cite==='X')mark='<span class="mlink" onclick="openMethod(\'exit\')">ⓘ</span>';else if(s.cite==='MO')mark='<span class="mlink" onclick="openMethod(\'moic\')">ⓘ</span>';else if(s.cite)mark=src(s.cite);return `<div class="cstep ${s.acc?'acc':''}"><div class="ck">${s.k}${mark}</div><div class="cval">${s.v}</div><div class="csub">${s.sub}</div></div>`;}).join('');
+  // strip
+  document.getElementById('s_asked').textContent=fmt(c.Ma)+'x';
+  document.getElementById('s_bed').textContent=(c.Me==null?'—':fmt(c.Me)+'x');
+  const sn=document.getElementById('i_sectornote');
+  if(sn)sn.innerHTML=`Sector: <b>${esc(D.sectorLabel)}</b>. Current growth <b>${Math.round(c.gEntry*100)}%</b> → <b>${c.entryTier}</b> tier → sourced median <b>${c.Me==null?'EBITDA-based':fmt(c.Me)+'x'}</b>. <a class="methodlink" onclick="openMethod('entry')">methodology ›</a> · Source: ${esc(D.tierSource)}.`;
+  document.getElementById('s_grid').textContent=(c.Me==null?'EBITDA':fmt(c.Me)+'x');
+  const re=document.getElementById('s_rich');
+  if(c.Me==null){re.textContent='—';re.className='v badge-rich';}
+  else{re.textContent=richTxt;re.className='v badge-rich '+(c.rich>0.005?'rich':(c.rich<-0.005?'cheap':''));}
+}
+function renderVerdict(c,hostId){
+  const richTxt=c.rich>0.005?`<b>${Math.round(c.rich*100)}% rich</b> vs the entry grid`:c.rich<-0.005?`<b>${Math.round(-c.rich*100)}% cheap</b> vs the entry grid`:`in line with the entry grid`;
+  const line=`Asked <b>${fmt(c.Ma)}x</b> vs the sourced <b>${c.entryTier}</b>-tier median <b>${fmt(c.Me)}x</b> for this sector (${richTxt}). At <b>${Math.round(c.gEntry*100)}%</b> ${c.gEntry!==c.g0?'real ':''}growth, ${Math.round(c.d*100)}% decay over <b>${c.H}y</b> → exit <b>${Math.round(c.gH*100)}%</b> → exit multiple <b>${c.fcfExit?'EBITDA-based':fmt(c.Mx)+'x'}</b> → exit value <b>${money(c.Vx)}</b> → MOIC <b>${fmt(c.moic)}x</b> (${c.ownNote}).`;
+  document.getElementById(hostId).innerHTML=`<div class="verdict ${c.cls}"><div><div class="mv">${fmt(c.moic)}x</div><div class="ml">MOIC · ${c.H}y</div></div><div><div class="vtag">${c.tag}</div><div class="vline">${line}</div></div></div>`;
+}
+function renderWalk(c){
+  let h='<thead><tr><th>Year</th><th>Growth</th><th>Tier</th><th>Exit mult</th><th>Revenue</th><th>Implied value</th></tr></thead><tbody>';
+  c.rows.forEach(r=>{const em=exitMultFor(r.g),multTxt=em==null?'FCF':fmt(em)+'x',val=(em==null?0:em)*r.rev,valTxt=em==null?'—':money(val);let cls='',tag='';if(r.y===0){cls='entry';tag=' <span class="tg in">ENTRY</span>';}if(r.y===c.H){cls='exit';tag=' <span class="tg out">EXIT</span>';}
+    h+=`<tr class="${cls}"><td>Y${r.y}${tag}</td><td>${Math.round(r.g*100)}%</td><td class="sc">${tierName(r.g)}</td><td>${multTxt}</td><td>${money(r.rev)}</td><td>${valTxt}</td></tr>`;});
+  h+='</tbody>';document.getElementById('walk').innerHTML=h;
+}
+function renderTierTable(c){
+  // Show the SOURCED sector multiples by growth tier; mark entry and exit tiers.
+  const eName=c.entryTier, xName=c.exitTier;
+  let h='<thead><tr><th class="rowh">Growth tier</th>';TIERS.forEach(t=>h+=`<th class="tierhead">${t.name}<small>${t.min>0?'≥'+Math.round(t.min*100)+'%':'<'+Math.round(TIERS[TIERS.length-2].min*100)+'%'}</small></th>`);h+='</tr></thead><tbody><tr><td class="rowh">Sourced median<small>EV/Revenue, this sector</small></td>';
+  TIERS.forEach((t)=>{const v=t.mult;const col=hmColor(v);let cls='';if(t.name===eName)cls+=' entry';if(t.name===xName)cls+=' exit';const disp=v==null?'EBITDA':fmt(v)+'x';h+=`<td class="cell${cls}"><span class="cv" style="background:${col.bg};color:${col.fg}">${disp}</span></td>`;});
+  h+='</tr></tbody>';document.getElementById('ladder').innerHTML=h;
+}
+function renderChainSentence(c){
+  const comp=c.Me>0?Math.round((1-c.Mx/c.Me)*100):0;
+  const tail=c.cls==='fail'?"Paying the entry multiple here doesn't return the target — the company won't command it at exit.":c.cls==='tight'?"It only works if growth decays slower, expansion lifts the exit tier, or you pay less at entry.":"The decayed exit multiple still clears the target at this entry price.";
+  document.getElementById('chainSentence').innerHTML=`📉 Enter in the <b>${c.entryTier}</b> tier (${fmt(c.Me)}x), exit in the <b>${c.exitTier}</b> tier (${c.fcfExit?'EBITDA-based':fmt(c.Mx)+'x'}) — ${comp}% multiple compression over ${c.H}y. ${tail}`;
+}
+function renderDelta(){
+  const ts=num('d_ts'),rw=num('d_rw')/100,np=num('d_np'),nl=num('d_nl');
+  const spread=rw<0.10?100:(rw<0.25?50:25),mom=Math.min(100,ts*20),net=100-np*25+nl*25;
+  const score=Math.round((spread+mom+net)/3);
+  const read=score>75?'paying consensus price — average returns; you need to be right where consensus is wrong':score>=50?'some delta exists if you have a specific non-obvious thesis':'market is still arguing — biggest delta for a thesis-driven investor';
+  document.getElementById('d_out').innerHTML=`Consensus score <b>${score}/100</b> — ${read}.`;
+}
+function renderMTR(c){
+  if(D.mode!=='mtr'){document.getElementById('mtrHost').innerHTML='';return;}
+  const g=(X.realGrowth!=null?X.realGrowth:c.gEntry), emN=entryMultFor(g), mtr=(emN==null?0:emN)*c.R0, mark=D.currentMark||0;
+  const gap=mark>0?(mark-mtr)/mark:0;
+  let flag,cls;if(gap<0.10){flag='Defensible — no action';cls='clear';}else if(gap<0.30){flag='Drifting — flag next quarterly review';cls='tight';}else if(gap<0.50){flag='Write-down candidate — note in fund reporting';cls='fail';}else{flag='Unrealized loss — defending it costs LPs';cls='fail';}
+  document.getElementById('mtrHost').innerHTML=`<h2 class="sec">Mark-to-reality (Frame 5)</h2><div class="verdict ${cls}"><div><div class="mv">${Math.round(gap*100)}%</div><div class="ml">mark gap</div></div><div><div class="vtag">${flag}</div><div class="vline">Current mark <b>${money(mark)}</b> vs mark-to-reality <b>${money(mtr)}</b> (${fmt(g*100,0)}% growth → public-tier <b>${emN==null?'FCF':fmt(emN)+'x'}</b> × ${money(c.R0)} rev).</div></div></div>`;
+}
+function runB1(){const c=computeChain();renderChain(c);renderVerdict(c,'verdictHost');renderWalk(c);renderTierTable(c);renderChainSentence(c);renderDelta();renderMTR(c);window._c1=c;wireCites();}
+['i_rev','i_price','i_target','d_ts','d_rw','d_np','d_nl'].forEach(id=>document.getElementById(id).addEventListener('input',runB1));
+[['i_g','i_gv','%'],['i_d','i_dv','%'],['i_h','i_hv','y']].forEach(([id,lab,suf])=>{const el=document.getElementById(id);el.addEventListener('input',()=>{document.getElementById(lab).textContent=el.value+suf;runB1();});});
+
+/* =================== BLOCK 2 — GROWTH QUALITY =================== */
+function pushRealGrowthDefault(){if(X.realGrowth==null)X.realGrowth=num('i_g')/100;}
+function runB2(){
+  const s=num('w_start'),nl=num('w_new'),ex=num('w_exp'),ch=num('w_churn'),dn=num('w_down'),pr=num('w_price');
+  const real=s>0?(nl+ex-ch-dn)/s:0, fake=s>0?pr/s:0, head=real+fake;
+  const grr=s>0?(s-ch-dn)/s:0, nrr=s>0?(s-ch-dn+ex)/s:0;
+  document.getElementById('w_head').textContent=Math.round(head*100)+'%';
+  document.getElementById('w_real').textContent=Math.round(real*100)+'%';
+  document.getElementById('w_fake').textContent=Math.round(fake*100)+'%';
+  document.getElementById('w_grr').textContent=Math.round(grr*100)+'%';
+  document.getElementById('w_nrr').textContent=Math.round(nrr*100)+'%';
+  if(s>0){X.realGrowth=real;const R0=num('i_rev'),P=num('i_price');const me=entryMultFor(real),mh=entryMultFor(num('i_g')/100),ma=R0>0?P/R0:0;
+    document.getElementById('w_retier').innerHTML=`Real growth <b>${Math.round(real*100)}%</b> → <b>${tierName(real)}</b> tier (sourced median <b>${fmt(me)}x</b>). Headline ${Math.round(head*100)}% would price <b>${tierName(num('i_g')/100)}</b> (${fmt(mh)}x). Asked ${fmt(ma)}x is now <b class="badge-rich ${ma>me?'rich':'cheap'}">${(ma/me-1>=0?'+':'')+Math.round((ma/me-1)*100)}%</b> vs the real-growth median.`;}
+  // maiming
+  const n0=num('m_nrr0'),n1=num('m_nrr1');
+  if(n0>0&&n1>0){const drift=n1-n0;X.maiming=(grr>=0.90&&drift<=-8);const read=X.maiming?`<b>Maiming in progress.</b> GRR holds (${Math.round(grr*100)}%) while NRR fell ${Math.abs(drift)} pts (${n0}%→${n1}%). Healthy NRR at scale is 115–130%${src(3)}; the expansion engine is failing — push decay toward 70–75%${src(7)} in Block 1.`:drift<=-8?`NRR fell ${Math.abs(drift)} pts (${n0}%→${n1}%) — investigate the expansion engine.`:`NRR roughly stable (${n0}%→${n1}%). Expansion engine intact.`;document.getElementById('m_out').innerHTML=read;}
+  // reaccel
+  const claim=document.getElementById('r_claim').checked,mech=document.getElementById('r_mech').checked;
+  document.getElementById('r_out').innerHTML=!claim?'No reacceleration claim to test.':mech?'Claim has hard mechanism evidence — prior updates from 33% toward ~67%. Still verify the conversion data.':'<b>Discount to the 1-in-3 base rate (33%)'+src(7)+'.</b> No mechanism evidence — this is statistical hope. Don\'t price the reacceleration.';
+  // TAM
+  const tam=num('t_tam'),tgt=num('t_tgt'),cur=num('i_rev');
+  if(tam>0){const penNow=cur/tam,penT=tgt/tam;document.getElementById('t_out').innerHTML=`Current penetration <b>${fmt(penNow*100,2)}%</b>${tgt>0?`, target <b>${fmt(penT*100,1)}%</b>`:''}. ${penT>0.10?'<b>Target needs &gt;10% share — near-monopoly. TAM understated or plan structurally impossible.</b>':penNow>0.01?'Above the 1% rule of thumb'+src(7)+' — pressure-test the TAM bottom-up.':'Below 1% — runway exists if the TAM is real (verify bottom-up).'}`;}
+  refreshTabs();wireCites();
+}
+['w_start','w_new','w_exp','w_churn','w_down','w_price','m_nrr0','m_nrr1','t_tam','t_tgt'].forEach(id=>document.getElementById(id).addEventListener('input',runB2));
+['r_claim','r_mech'].forEach(id=>document.getElementById(id).addEventListener('change',runB2));
+function applyCascadeFromB2(){if(X.maiming){const dEl=document.getElementById('i_d');if(+dEl.value>75){dEl.value=75;document.getElementById('i_dv').textContent='75%';}}runB1();}
+
+/* =================== BLOCK 3 — CAPITAL =================== */
+function runB3(){
+  const burn=num('c_burn'),nn=num('c_nnarr'),gm=num('c_gm')/100;
+  const raw=nn>0?burn/nn:0, adj=(nn>0&&gm>0)?burn/(nn*gm):0;
+  const band=v=>v<1?'amazing':v<2?'good':v<3?'suspect':'dangerous';
+  if(nn>0)document.getElementById('c_burn_out').innerHTML=`Raw burn multiple <b>${fmt(raw,2)}x</b> (${band(raw)}). GM-adjusted <b>${fmt(adj,2)}x</b> (${band(adj)}) at ${Math.round(gm*100)}% margin.${src(6)} ${gm<0.7&&adj>raw*1.2?'<b>The SaaS framing flatters this — the GM-adjusted figure is the real read.</b>':''}`;
+  // fund math
+  const check=num('c_check'),own=num('c_own')/100,dil=num('c_dil')/100,fund=num('c_fund');
+  const dOwn=own*(1-dil);X.dilOwn=dOwn;X.checkSize=check;
+  const R0=num('i_rev');
+  const scen=[{n:'Grind',arr:R0*4,m:5},{n:'Solid',arr:R0*10,m:8},{n:'Breakout',arr:R0*20,m:12}];
+  let h='<thead><tr><th>Scenario</th><th>Exit ARR</th><th>Mult</th><th>Exit value</th><th>Proceeds</th><th>MOIC on check</th><th>% of fund</th></tr></thead><tbody>';
+  scen.forEach(s=>{const ev=s.arr*s.m,pr=ev*dOwn,mo=check>0?pr/check:0,pf=fund>0?pr/fund:0;h+=`<tr><td class="sc">${s.n}</td><td>${money(s.arr)}</td><td>${s.m}x</td><td>${money(ev)}</td><td>${money(pr)}</td><td>${fmt(mo)}x</td><td>${fmt(pf*100,0)}%</td></tr>`;});
+  h+='</tbody>';document.getElementById('c_scen').innerHTML=h;
+  const solidMo=(R0*10*8*dOwn)/(check||1);
+  document.getElementById('c_fund_out').innerHTML=`Diluted ownership <b>${fmt(dOwn*100,1)}%</b> (${fmt(own*100,0)}% entry × ${Math.round((1-dil)*100)}% post-dilution). Venture-eligible only if Solid/Breakout is realistic with Grind as the floor. Solid returns <b>${fmt(solidMo)}x</b> on the check.`;
+  // hubristic
+  let hc=0;['h1','h2','h3','h4'].forEach(id=>{if(document.getElementById(id).checked)hc++;});
+  document.getElementById('h_out').innerHTML=hc>=2?`<b>${hc}/4 hubristic signals.</b> This looks like a round-too-far — pass even if respected funds are bidding.`:hc===1?'1 hubristic signal — watch the round-on-round step-up vs fundamentals.':'No hubristic signals flagged.';
+  // positional
+  const pos=document.getElementById('p_pos').value,spend=document.getElementById('p_spend').checked,shift=document.getElementById('p_shift').checked;
+  document.getElementById('p_out').innerHTML=(pos!=='1'&&spend&&!shift)?'<b>Positional indiscipline.</b> Spending like #1 from a non-leader position without a structural shift — burn won\'t compound at the leader\'s rate. Reframe as Focus.':(pos!=='1'&&spend&&shift)?'Spending like #1 but a structural shift may justify it — verify the shift is real.':'Spending matches position.';
+  refreshTabs();wireCites();
+}
+['c_burn','c_nnarr','c_gm','c_check','c_own','c_dil','c_fund'].forEach(id=>document.getElementById(id).addEventListener('input',runB3));
+['h1','h2','h3','h4','p_spend','p_shift'].forEach(id=>document.getElementById(id).addEventListener('change',runB3));
+document.getElementById('p_pos').addEventListener('change',runB3);
+function applyCascadeFromB3(){runB1();}
+
+/* =================== BLOCK 4 — DEFENSIBILITY =================== */
+const MOATDIMS=[
+  {k:'Technology',d:'proprietary model/IP vs commodity execution'},
+  {k:'Distribution',d:'regulatory / licensing / relationship lock'},
+  {k:'Network effects',d:'does adding a user raise value to others?'},
+  {k:'Switching costs',d:'integration density × use intensity'}
+];
+function renderMoat(){
+  let h='';MOATDIMS.forEach((m,i)=>{h+=`<div class="moatrow"><div class="ml2">${m.k}<small>${m.d}</small></div><div class="dots5" data-dim="${i}">`;for(let s=1;s<=5;s++)h+=`<div class="dt ${X.moat[i]>=s?'on':''}" data-s="${s}"></div>`;h+=`</div><div class="mscore">${X.moat[i]}</div></div>`;});
+  document.getElementById('moatHost').innerHTML=h;
+  document.querySelectorAll('.dots5').forEach(row=>row.addEventListener('click',e=>{const dt=e.target.closest('.dt');if(!dt)return;X.moat[+row.dataset.dim]=+dt.dataset.s;renderMoat();}));
+}
+function runB4(){
+  X.erosion=document.getElementById('e_rate').value;
+  const eread={slow:'Slow erosion — durable distribution/regulatory lock. 85% decay holds.',mod:'Moderate erosion — some commoditization underway. Hold 85% decay, watch the trajectory.',fast:'<b>Fast erosion — core capabilities already commoditized.</b> Push decay to 70–75% in Block 1.'}[X.erosion];
+  document.getElementById('e_out').innerHTML=eread;
+  const nl=document.getElementById('cv_nl').checked,phys=document.getElementById('cv_phys').checked,layer=document.getElementById('cv_layer').value;
+  document.getElementById('cv_out').innerHTML=(nl&&!phys)?'<b>Converging.</b> Workflow is agent-replaceable. '+(layer==='point'?'Company sits in the absorbed middle — price the position as decaying.':layer==='agent'?'Company is the consolidating agent — it inherits the TAM if it wins the layer.':'Infra/regulatory layer claim — verify it truly survives an agent wrapping it.'):phys?'Physical/regulatory rails present — survives convergence as a point solution.':'Run the test: is the workflow "natural language + AI does the work"?';
+  const avg=num('ig_avg'),pct=num('ig_pct');
+  document.getElementById('ig_out').innerHTML=avg>0?`${avg} integrations/customer, ${pct}% use 3+. ${avg<5?'<b>Not a moat</b> — below the 5-integration threshold.':avg<10?'Early threshold — switching cost forming but not yet a real moat.':avg<25?'Real switching-cost moat.':'Salesforce-tier — product can be inferior and still retain.'} ${pct<40?'Low use intensity caps the moat regardless of count.':''}`:'';
+  if(D.mode==='mtr'){const id=document.getElementById('bg_id').checked;document.getElementById('bg_out').innerHTML=id?'A specific over-priced bear case is identifiable — this can be a real bargain. Name it explicitly in the report.':'<b>No identifiable over-priced bear case → default skepticism.</b> Most discounts are correctly priced decline.';document.getElementById('bargainCard').style.display='';}
+  else{document.getElementById('bargainCard').style.display='none';}
+  refreshTabs();wireCites();
+}
+['e_rate','cv_layer'].forEach(id=>document.getElementById(id).addEventListener('change',runB4));
+['cv_nl','cv_phys','bg_id'].forEach(id=>document.getElementById(id).addEventListener('change',runB4));
+['ig_avg','ig_pct'].forEach(id=>document.getElementById(id).addEventListener('input',runB4));
+function applyCascadeFromB4(){if(X.erosion==='fast'){const dEl=document.getElementById('i_d');if(+dEl.value>75){dEl.value=72;document.getElementById('i_dv').textContent='72%';}}runB1();}
+
+/* =================== BLOCK 5 — DECISION =================== */
+function runB5(){
+  const mkt=document.getElementById('tb_mkt').checked,team=document.getElementById('tb_team').checked,risk=document.getElementById('tb_risk').checked;
+  const pass=mkt&&team&&risk;
+  document.getElementById('tb_out').innerHTML=pass?'<b>Passes all three boxes</b> — deserves full diligence / a number.':'<b>Fails the gate.</b> '+(!mkt?'Market box open. ':'')+(!team?'Team box open. ':'')+(!risk?'Residual-risk box open.':'');
+  const c=window._c1||computeChain();const tam=num('t_tam');
+  document.getElementById('ev_out').innerHTML=tam>0?(num('i_price')>=tam?'<b>Entry price ≥ TAM — structurally unprofitable.</b> Even 100% capture returns 1x.':`Entry ${money(num('i_price'))} vs TAM ${money(tam)} — price is ${fmt(num('i_price')/tam*100,0)}% of TAM. ${num('i_price')/tam>0.3?'High — implied capture is demanding.':'Workable headroom.'}`):'Enter TAM in Block 2 to run the entry-vs-TAM check.';
+  const pit=document.getElementById('ff_pitch').value,exe=document.getElementById('ff_exec').value;
+  document.getElementById('ff_out').innerHTML=pit!==exe?`<b>Strategy gap:</b> pitches ${pit}, executes ${exe}. ${exe==='Fight'?'Fighting from a non-leader position burns capital that won\'t compound (Frame 14).':'The gap itself is the diligence signal.'}`:`Consistent — pitches and executes ${pit}.`;
+  let ms=[];if(document.getElementById('ms_gp').checked)ms.push('GP commit (+)');if(document.getElementById('ms_sec').checked)ms.push('heavy insider secondary (−)');if(document.getElementById('ms_pro').checked)ms.push('prior lead full pro-rata (+)');
+  document.getElementById('ms_out').innerHTML=ms.length?'Signals: '+ms.join(', ')+'.':'No cash signals captured yet.';
+  // recommended number: solve for post that hits target MOIC at diluted ownership & decayed exit
+  const T=num('i_target'),Vx=c.Vx,dOwn=(X.dilOwn!=null?X.dilOwn:1);
+  let recPost;
+  if(c.fcfExit){
+    recPost=0;X.recPost=0;X.recMult=0;
+    document.getElementById('rec_post').value=0;document.getElementById('rec_mult').value='—';
+    document.getElementById('rec_out').innerHTML=`<b>Exit lands below 10% growth → valued on FCF, not revenue.</b> At ${Math.round(c.d*100)}% decay over ${c.H}y, growth decays to ${Math.round(c.gH*100)}% — there's no defensible revenue multiple at exit. Either the hold is too long for this decay rate, or the decay (driven by the maiming/erosion read) is too severe for a venture return. Re-examine Blocks 2 and 4, or shorten the hold.`;
+  } else if(X.dilOwn!=null){recPost=(Vx*dOwn)/T;X.recPost=recPost;X.recMult=c.R0>0?recPost/c.R0:0;document.getElementById('rec_post').value=Math.round(recPost);document.getElementById('rec_mult').value=fmt(X.recMult);document.getElementById('rec_out').innerHTML=`At diluted ownership <b>${fmt(dOwn*100,1)}%</b> and exit value <b>${money(Vx)}</b>, the entry post that returns <b>${fmt(T)}x</b> is <b>${money(recPost)}</b> (vs asked ${money(num('i_price'))}).`;}
+  else{recPost=Vx/T;X.recPost=recPost;X.recMult=c.R0>0?recPost/c.R0:0;document.getElementById('rec_post').value=Math.round(recPost);document.getElementById('rec_mult').value=fmt(X.recMult);document.getElementById('rec_out').innerHTML=`Exit value <b>${money(Vx)}</b> ÷ target <b>${fmt(T)}x</b> = entry post <b>${money(recPost)}</b> (entry-ownership basis; complete Block 3 for diluted).`;}
+  // verdict
+  let cls=c.cls,tag=c.tag;if(!pass){cls='fail';tag='Three-Box gate fails — pass regardless of price';}
+  if(c.fcfExit){cls='fail';tag='Exit decays into FCF territory — no venture return at this decay/hold';}
+  X.verdict={cls,tag,recPost,recMult:X.recMult};
+  const recDisp=c.fcfExit?'—':money(recPost);
+  document.getElementById('b5_verdict').innerHTML=`<div class="verdict ${cls}"><div><div class="mv">${recDisp}</div><div class="ml">recommended post</div></div><div><div class="vtag">${tag}</div><div class="vline">${c.fcfExit?`At ${Math.round(c.d*100)}% decay over ${c.H}y the company exits below 10% growth — valued on FCF, not a revenue multiple. No venture-scale entry number works; revisit decay (Blocks 2/4) or hold.`:`Recommended entry <b>${money(recPost)}</b> (~<b>${fmt(X.recMult)}x</b> rev) returns the <b>${fmt(T)}x</b> target at the decayed exit and diluted ownership. Asked: <b>${money(num('i_price'))}</b>.`}</div></div></div>`;
+}
+['tb_mkt','tb_team','tb_risk','ms_gp','ms_sec','ms_pro'].forEach(id=>document.getElementById(id).addEventListener('change',runB5));
+['ff_pitch','ff_exec'].forEach(id=>document.getElementById(id).addEventListener('change',runB5));
+document.getElementById('rec_post').addEventListener('input',()=>{const p=num('rec_post'),c=window._c1;document.getElementById('rec_mult').value=fmt(c&&c.R0>0?p/c.R0:0);});
+
+/* =================== BLOCK 6 — MERGE =================== */
+function buildMerge(){runB1();runB5();
+  const c=window._c1;const head=num('i_g')/100;
+  // reconciliation
+  const rows=[
+    ['Growth tier',`${Math.round(head*100)}% headline · ${tierName(head)}`,X.realGrowth!=null?`${Math.round(X.realGrowth*100)}% real · ${tierName(X.realGrowth)}`:'—','Block 2 (waterfall)'],
+    ['Decay rate','85% default',`${Math.round(num('i_d'))}%`, X.erosion==='fast'||X.maiming?'Block 2/4 (maiming/erosion)':'unchanged'],
+    ['Ownership / MOIC',`entry · ${fmt(c.ownNote==='entry'?c.moic:(c.Vx/c.P))}x`,X.dilOwn!=null?`diluted ${fmt(X.dilOwn*100,1)}% · ${fmt(c.moic)}x`:'—','Block 3 (dilution)'],
+    ['Exit multiple',`${c.fcfExit?'EBITDA':fmt(c.Mx)+'x'} · ${c.exitTier} tier`, X.erosion==='fast'?'faster decay → lower exit tier':'decay unchanged','Block 4 (erosion sets decay)'],
+    ['Entry number',`asked ${money(c.P)}`,X.recPost!=null?`recommended ${money(X.recPost)}`:'—','Block 5 (synthesis)']
+  ];
+  let rt='<tr><th>Assumption</th><th>Block 1 (headline)</th><th>Corrected</th><th>By</th></tr>';
+  rows.forEach(r=>rt+=`<tr><td>${r[0]}</td><td class="bk">${r[1]}</td><td class="bk">${r[2]}</td><td>${r[3]}</td></tr>`);
+  document.getElementById('reconTable').innerHTML=rt;
+  // verdict
+  const v=X.verdict||{cls:c.cls,tag:c.tag,recPost:c.Vx/num('i_target')};
+  document.getElementById('mergeVerdict').innerHTML=`<div class="verdict ${v.cls}"><div><div class="mv">${fmt(c.moic)}x</div><div class="ml">MOIC · ${c.H}y</div></div><div><div class="vtag">${v.tag}</div><div class="vline">${icLine()}</div></div></div>`;
+  // block summaries
+  const moatAvg=(X.moat.reduce((a,b)=>a+b,0)/4).toFixed(1);
+  const blocks=[
+    ['① Price',`Asked ${fmt(c.Ma)}x vs sourced ${c.entryTier}-tier median ${fmt(c.Me)}x (${(c.rich>=0?'+':'')+Math.round(c.rich*100)}%). MOIC ${fmt(c.moic)}x (${c.ownNote}).`],
+    ['② Growth Quality',X.realGrowth!=null?`Real growth ${Math.round(X.realGrowth*100)}% vs ${Math.round(head*100)}% headline → ${tierName(X.realGrowth)} tier. ${X.maiming?'Maiming pattern present.':'No maiming.'}`:'Not completed.'],
+    ['③ Capital',X.dilOwn!=null?`Diluted ownership ${fmt(X.dilOwn*100,1)}%. Fund-returner only on Solid/Breakout.`:'Not completed.'],
+    ['④ Defensibility',`Moat avg ${moatAvg}/5. Erosion ${X.erosion}. ${document.getElementById('cv_layer')?'Convergence layer: '+document.getElementById('cv_layer').value:''}.`],
+    ['⑤ Decision',`${(document.getElementById('tb_mkt').checked&&document.getElementById('tb_team').checked&&document.getElementById('tb_risk').checked)?'Passes Three-Box.':'Fails Three-Box gate.'} Recommended ${money(X.recPost||0)} (~${fmt(X.recMult||0)}x).`]
+  ];
+  document.getElementById('reportBlocks').innerHTML=blocks.map(b=>`<div class="repblock"><div class="rk">${b[0]}</div><div style="font-size:12.5px;line-height:1.55;color:var(--ink2)">${b[1]}</div></div>`).join('');
+}
+function icLine(){const c=window._c1;const head=num('i_g')/100;const g=X.realGrowth!=null?X.realGrowth:c.gEntry;
+  return `Asked <b>${fmt(c.Ma)}x</b> rev vs the sourced <b>${tierName(g)}</b>-tier median <b>${fmt(c.Me)}x</b> for ${esc(D.sectorLabel)} (${(c.rich>=0?'+':'')+Math.round(c.rich*100)}% on ${X.realGrowth!=null?'real':'headline'} growth). Real growth <b>${Math.round(g*100)}%</b> (headline ${Math.round(head*100)}%). ${Math.round(num('i_d'))}% decay × <b>${c.H}y</b> → exit <b>${Math.round(c.gH*100)}%</b> → exit multiple <b>${c.fcfExit?'EBITDA-based':fmt(c.Mx)+'x'}</b> → exit value <b>${money(c.Vx)}</b> → MOIC <b>${fmt(c.moic)}x</b>${X.dilOwn!=null?` at <b>${fmt(X.dilOwn*100,1)}%</b> diluted`:''}. Moat erosion <b>${X.erosion}</b>; ${X.maiming?'<b>maiming present</b>':'clean'}. Recommended <b>${money(X.recPost||0)}</b>.`;
+}
+document.getElementById('copyIC').addEventListener('click',()=>{const tmp=document.createElement('div');tmp.innerHTML=icLine();const txt=(window._c1?(tmp.textContent||tmp.innerText):'')+' Verdict: '+(X.verdict?X.verdict.tag:'');navigator.clipboard&&navigator.clipboard.writeText(txt);document.getElementById('copyIC').textContent='Copied ✓';setTimeout(()=>document.getElementById('copyIC').textContent='Copy IC summary',1500);});
+document.getElementById('exportReport').addEventListener('click',exportReport);
+function exportReport(){
+  const c=window._c1;const recon=document.getElementById('reconTable').outerHTML;const blocks=document.getElementById('reportBlocks').innerHTML;const v=X.verdict||{};
+  const srcRows=SRC.map(s=>`<tr><td class="num">${esc(s.n)}</td><td>${s.url?`<a href="${esc(safeUrl(s.url))}">${esc(s.label)} ↗</a>`:esc(s.label)}</td><td>${esc(s.note)}</td><td>${s.kind==='index'?'live source':'convention'}</td></tr>`).join('');
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Pricing Report — ${esc(D.name)}</title><style>body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:860px;margin:40px auto;padding:0 24px;color:#0f1419;line-height:1.6}h1{font-size:22px}h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#6b7682;border-bottom:1px solid #e4e8ed;padding-bottom:6px;margin-top:32px}.v{border-radius:12px;padding:18px;margin:18px 0;border:1px solid}.clear{background:#eefaf2;border-color:#bfe6cf}.tight{background:#fdf6ea;border-color:#f0dcbb}.fail{background:#fdeeed;border-color:#f3c9c5}.tag{font-weight:700;font-size:15px;margin-bottom:6px}table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}td,th{padding:7px 8px;border-bottom:1px solid #eef1f4;text-align:left;vertical-align:top}th{font-size:11px;text-transform:uppercase;color:#6b7682}.bk{font-family:ui-monospace,Menlo,monospace}.num{font-family:ui-monospace,Menlo,monospace;font-weight:700;color:#0e8a8a}.rb{border:1px solid #e4e8ed;border-radius:10px;padding:14px 16px;margin-bottom:12px}.rk{font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#6b7682;font-weight:700;margin-bottom:8px}a{color:#0e8a8a}.foot{font-size:11px;color:#6b7682;margin-top:30px;border-top:1px solid #e4e8ed;padding-top:12px}</style></head><body><h1>Pricing Discipline — ${esc(D.name)}</h1><div style="color:#6b7682;font-size:13px">${esc(D.assetClass)} · ${D.mode==='mtr'?'Mark-to-reality':'Entry pricing'} · ${esc(D.sectorLabel)} · hold ${esc(D.hold)}y · target ${esc(D.target)}x</div><div class="v ${v.cls||c.cls}"><div class="tag">${v.tag||c.tag}</div><div>${icLine()}</div></div><h2>The cascade</h2>${recon}<h2>Block summaries</h2>${blocks}<h2>Benchmarking &amp; sources</h2><table><thead><tr><th class="num">#</th><th>Source</th><th>Anchors</th><th>Type</th></tr></thead><tbody>${srcRows}</tbody></table><div class="foot">25-frame Lemkin/O'Driscoll pricing-discipline playbook. Multiples are sourced public-comp <b>medians</b> by sector and growth tier (no synthetic ladder, no cap) — entry read at the current-growth tier, exit at the decayed-growth tier; see the numbered sources. Practitioner conventions (the growth-tier boundaries and the 85% decay rule) are judgment, not measured data. The cascade reconciliation is the finding.</div></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pricing-'+D.slug+'-report.html';a.click();
+}
+
+/* =================== INIT =================== */
+function renderSources(){
+  // Optional reference library of sourced sector medians (data-driven; nothing hardcoded in the template).
+  const bl=document.getElementById('benchLibrary');
+  if(bl){const lib=Array.isArray(D.benchmarkLibrary)?D.benchmarkLibrary:[];bl.innerHTML=lib.length?lib.map(card=>`<div class="bmcard"><h4>${esc(card.title)}${card.cite?src(card.cite):''} ${card.note?`<span style="font-weight:400;color:var(--mut);font-size:11px;">(${esc(card.note)})</span>`:''}</h4>${card.rows.map(r=>`<div class="row"><span>${esc(r[0])}</span><span class="bv">${esc(r[1])}${r[2]?src(r[2]):''}</span></div>`).join('')}</div>`).join(''):'<div style="font-size:12px;color:var(--mut)">No reference library supplied for this deal — the applied sector multiples are shown below and the numbered sources are listed at the bottom.</div>';}
+  let h='<thead><tr><th class="num">#</th><th>Source</th><th>What it anchors</th><th>Type</th></tr></thead><tbody>';
+  SRC.forEach(s=>{
+    const u=safeUrl(s.url);
+    const linkCell = s.url
+      ? `<div class="lbl">${esc(s.label)}</div><a class="srclink" href="${esc(u)}" target="_blank" rel="noopener" data-url="${esc(u)}">${esc(s.url)} ↗</a>`
+      : `<div class="lbl">${esc(s.label)}</div><span style="font-size:11px;color:var(--mut)">no public URL — practitioner convention</span>`;
+    h+=`<tr><td class="num">${esc(s.n)}</td><td>${linkCell}</td><td style="color:var(--ink2)">${esc(s.note)}</td><td><span class="kind ${s.kind==='index'?'index':'convention'}">${s.kind==='index'?'live source':'convention'}</span></td></tr>`;
+  });
+  h+='</tbody>';
+  const t=document.getElementById('srctable');t.innerHTML=h;
+  // per-deal applied tiers
+  const dt=document.getElementById('dealTiers');
+  if(dt){dt.innerHTML=`<b>${esc(D.sectorLabel)}</b> — source: ${esc(D.tierSource)}<br><br>`+TIERS.map(ti=>`<span style="display:inline-block;min-width:150px"><b>${esc(ti.name)}</b> (${ti.min>0?'≥'+Math.round(ti.min*100)+'%':'<10%'}):</span> ${ti.mult==null?'EV/EBITDA':fmt(ti.mult)+'x'}`).join('<br>');}
+  // Sandbox-safe: clicking a source link tries to open it; if blocked, copy the URL and confirm.
+  t.querySelectorAll('a.srclink').forEach(a=>{
+    a.addEventListener('click',e=>{
+      const url=a.dataset.url;
+      let opened=null;
+      try{opened=window.open(url,'_blank','noopener');}catch(_){}
+      if(!opened){ // blocked by sandbox — copy to clipboard and tell the user
+        e.preventDefault();
+        try{navigator.clipboard&&navigator.clipboard.writeText(url);}catch(_){}
+        const old=a.textContent;a.textContent='Link copied — paste in a new tab ✓';
+        setTimeout(()=>{a.textContent=old;},2000);
+      }
+    });
+  });
+}
+function setv(id,v){const el=document.getElementById(id);if(el&&v!=null&&!Number.isNaN(v))el.value=v;}
+function init(){
+  // ---- Block 1: price + growth / decay / hold ----
+  setv('i_rev',D.revenue); setv('i_price',D.askedPost); setv('i_target',D.target);
+  const gpct=Math.round((D.growth||0)*100); setv('i_g',gpct); document.getElementById('i_gv').textContent=gpct+'%';
+  const dpct=Math.round((D.decay!=null?D.decay:0.85)*100); setv('i_d',dpct); document.getElementById('i_dv').textContent=dpct+'%';
+  setv('i_h',D.hold); document.getElementById('i_hv').textContent=(D.hold||7)+'y';
+  // ---- Block 2: revenue waterfall + NRR trajectory (this is the cascade's real-growth source) ----
+  const w=D.waterfall||{};
+  setv('w_start',w.start!=null?w.start:D.revenue);
+  setv('w_new',w.new); setv('w_exp',w.exp); setv('w_churn',w.churn); setv('w_down',w.down); setv('w_price',w.price);
+  setv('m_nrr0',D.nrr0); setv('m_nrr1',D.nrr1);
+  setv('t_tam',D.tam); setv('t_tgt',D.targetArr);
+  // ---- Block 3: capital + fund math ----
+  setv('c_burn',D.burn); setv('c_nnarr',D.netNewArr); setv('c_gm',Math.round((D.gm||0.75)*100));
+  setv('c_check',D.checkSize||3);
+  setv('c_own',D.entryOwnership!=null?Math.round(D.entryOwnership*100):null);
+  setv('c_dil',D.dilution!=null?Math.round(D.dilution*100):null);
+  setv('c_fund',D.fundSize);
+  // ---- Block 4: moat + erosion + convergence + integration density ----
+  if(Array.isArray(D.moat))for(let i=0;i<4;i++)if(D.moat[i]!=null)X.moat[i]=D.moat[i];
+  const eroMap={slow:'slow',moderate:'mod',mod:'mod',fast:'fast'};
+  if(D.erosion&&eroMap[D.erosion]){X.erosion=eroMap[D.erosion];const er=document.getElementById('e_rate');if(er)er.value=X.erosion;}
+  const layMap={agent:'agent','consolidating agent':'agent',point:'point','point solution':'point',infra:'infra'};
+  if(D.convergenceLayer&&layMap[D.convergenceLayer]){const cl=document.getElementById('cv_layer');if(cl)cl.value=layMap[D.convergenceLayer];}
+  setv('ig_avg',D.integAvg); setv('ig_pct',D.integPct);
+  // ---- Block 5: Three-Box gate ----
+  const tb=D.threeBox||{};
+  const tbm=document.getElementById('tb_mkt'),tbt=document.getElementById('tb_team'),tbr=document.getElementById('tb_risk');
+  if(tbm)tbm.checked=!!tb.market; if(tbt)tbt.checked=!!tb.team; if(tbr)tbr.checked=!!tb.risk;
+  // Render every block from config so each panel is correct the moment it unlocks. Block 1 still
+  // prices on headline until Block 2 is signed off (the gate in computeChain) — the cascade is preserved.
+  renderMoat();renderSources();
+  runB1();runB2();runB3();runB4();runB5();
+  refreshTabs();wireCites();
+}
+init();
+</script>
+</body>
+</html>
